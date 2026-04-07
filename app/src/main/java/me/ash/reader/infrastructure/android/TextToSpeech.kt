@@ -84,7 +84,9 @@ class TextToSpeechManager @Inject constructor(
                     .firstOrNull()?.locale
         }
 
-        val textSegments = text.split("\n").filterNot { it.isBlank() }
+        val textSegments = text.split(Regex("\n{2,}"))
+            .map { it.replace('\n', ' ').trim() }
+            .filterNot { it.isBlank() }
         val total = textSegments.size
         state = State.Reading(0, total)
 
