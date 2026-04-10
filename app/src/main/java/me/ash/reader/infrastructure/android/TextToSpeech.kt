@@ -84,9 +84,17 @@ class TextToSpeechManager @Inject constructor(
                     .firstOrNull()?.locale
         }
 
-        val textSegments = text.split(Regex("\n{2,}"))
-            .map { it.replace('\n', ' ').trim() }
-            .filterNot { it.isBlank() }
+        val normalized = text.replace(Regex("\\s+"), " ").trim()
+        val maxLen = TextToSpeech.getMaxSpeechInputLength()
+        val textSegments = buildList {
+            var remaining = normalized
+            while (remaining.length > maxLen) {
+                val split = remaining.lastIndexOf(' ', maxLen).takeIf { it > 0 } ?: maxLen
+                add(remaining.substring(0, split))
+                remaining = remaining.substring(split).trimStart()
+            }
+            if (remaining.isNotBlank()) add(remaining)
+        }
         val total = textSegments.size
         state = State.Reading(0, total)
 
