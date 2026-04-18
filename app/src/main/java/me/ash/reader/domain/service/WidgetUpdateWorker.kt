@@ -45,6 +45,10 @@ constructor(
 
         ArticleListWidget().updateAll(applicationContext)
         ArticleCardWidget().updateAll(applicationContext)
+        applicationContext.contentResolver.notifyChange(
+            android.net.Uri.parse("content://me.ash.reader.widget.articles"),
+            null
+        )
         return Result.success()
     }
 
