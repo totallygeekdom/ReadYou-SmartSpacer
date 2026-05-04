@@ -9,10 +9,13 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyListState
@@ -33,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
@@ -47,6 +51,7 @@ import me.ash.reader.infrastructure.preference.LocalPullToSwitchArticle
 import me.ash.reader.infrastructure.preference.LocalReadingAutoHideToolbar
 import me.ash.reader.infrastructure.preference.LocalReadingBoldCharacters
 import me.ash.reader.infrastructure.preference.LocalReadingTextLineHeight
+import me.ash.reader.infrastructure.preference.LocalSwipeToSwitchArticle
 import me.ash.reader.infrastructure.preference.not
 import me.ash.reader.ui.ext.collectAsStateValue
 import me.ash.reader.ui.ext.showToast
@@ -71,6 +76,7 @@ fun ReadingPage(
     val context = LocalContext.current
     val hapticFeedback = LocalHapticFeedback.current
     val isPullToSwitchArticleEnabled = LocalPullToSwitchArticle.current.value
+    val isSwipeToSwitchArticleEnabled = LocalSwipeToSwitchArticle.current.value
     val readingUiState = viewModel.readingUiState.collectAsStateValue()
     val readerState = viewModel.readerStateStateFlow.collectAsStateValue()
     val boldCharacters = LocalReadingBoldCharacters.current
@@ -78,6 +84,7 @@ fun ReadingPage(
 
     var isReaderScrollingDown by remember { mutableStateOf(false) }
     var showFullScreenImageViewer by remember { mutableStateOf(false) }
+    var isHorizontalSwipe by remember { mutableStateOf(false) }
 
     var currentImageData by remember { mutableStateOf(ImageData()) }
 
@@ -140,34 +147,71 @@ fun ReadingPage(
                                 }
                             val exit = 100
                             val enter = exit * 2
-                            (slideInVertically(
-                                initialOffsetY = { (it * 0.2f * direction).toInt() },
-                                animationSpec =
-                                    spring(
-                                        dampingRatio = .9f,
-                                        stiffness = Spring.StiffnessLow,
-                                        visibilityThreshold = IntOffset.VisibilityThreshold,
-                                    ),
-                            ) +
-                                fadeIn(
-                                    tween(
-                                        delayMillis = exit,
-                                        durationMillis = enter,
-                                        easing = LinearOutSlowInEasing,
-                                    )
-                                )) togetherWith
-                                (slideOutVertically(
-                                    targetOffsetY = { (it * -0.2f * direction).toInt() },
+                            if (isHorizontalSwipe) {
+                                (slideInHorizontally(
+                                    initialOffsetX = { (it * 0.4f * direction).toInt() },
                                     animationSpec =
                                         spring(
-                                            dampingRatio = Spring.DampingRatioNoBouncy,
+                                            dampingRatio = .9f,
                                             stiffness = Spring.StiffnessLow,
                                             visibilityThreshold = IntOffset.VisibilityThreshold,
                                         ),
                                 ) +
-                                    fadeOut(
-                                        tween(durationMillis = exit, easing = FastOutLinearInEasing)
-                                    ))
+                                    fadeIn(
+                                        tween(
+                                            delayMillis = exit,
+                                            durationMillis = enter,
+                                            easing = LinearOutSlowInEasing,
+                                        )
+                                    )) togetherWith
+                                    (slideOutHorizontally(
+                                        targetOffsetX = { (it * -0.4f * direction).toInt() },
+                                        animationSpec =
+                                            spring(
+                                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                                stiffness = Spring.StiffnessLow,
+                                                visibilityThreshold = IntOffset.VisibilityThreshold,
+                                            ),
+                                    ) +
+                                        fadeOut(
+                                            tween(
+                                                durationMillis = exit,
+                                                easing = FastOutLinearInEasing,
+                                            )
+                                        ))
+                            } else {
+                                (slideInVertically(
+                                    initialOffsetY = { (it * 0.2f * direction).toInt() },
+                                    animationSpec =
+                                        spring(
+                                            dampingRatio = .9f,
+                                            stiffness = Spring.StiffnessLow,
+                                            visibilityThreshold = IntOffset.VisibilityThreshold,
+                                        ),
+                                ) +
+                                    fadeIn(
+                                        tween(
+                                            delayMillis = exit,
+                                            durationMillis = enter,
+                                            easing = LinearOutSlowInEasing,
+                                        )
+                                    )) togetherWith
+                                    (slideOutVertically(
+                                        targetOffsetY = { (it * -0.2f * direction).toInt() },
+                                        animationSpec =
+                                            spring(
+                                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                                stiffness = Spring.StiffnessLow,
+                                                visibilityThreshold = IntOffset.VisibilityThreshold,
+                                            ),
+                                    ) +
+                                        fadeOut(
+                                            tween(
+                                                durationMillis = exit,
+                                                easing = FastOutLinearInEasing,
+                                            )
+                                        ))
+                            }
                         },
                         label = "",
                     ) {
@@ -179,6 +223,7 @@ fun ReadingPage(
                                         onLoadNext =
                                             if (isNextArticleAvailable) {
                                                 {
+                                                    isHorizontalSwipe = false
                                                     val (id, index) = readerState.nextArticle
                                                     onLoadArticle(id, index)
                                                 }
@@ -186,6 +231,7 @@ fun ReadingPage(
                                         onLoadPrevious =
                                             if (isPreviousArticleAvailable) {
                                                 {
+                                                    isHorizontalSwipe = false
                                                     val (id, index) = readerState.previousArticle
                                                     onLoadArticle(id, index)
                                                 }
@@ -239,7 +285,42 @@ fun ReadingPage(
                                         }
                                 ) {
                                     Box(
-                                        modifier = Modifier.fillMaxSize(),
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .then(
+                                                if (isSwipeToSwitchArticleEnabled) {
+                                                    Modifier.pointerInput(
+                                                        readerState.nextArticle,
+                                                        readerState.previousArticle,
+                                                    ) {
+                                                        var totalDrag = 0f
+                                                        detectHorizontalDragGestures(
+                                                            onDragEnd = {
+                                                                val threshold = size.width * 0.25f
+                                                                when {
+                                                                    totalDrag < -threshold &&
+                                                                        readerState.nextArticle != null -> {
+                                                                        isHorizontalSwipe = true
+                                                                        val (id, index) = readerState.nextArticle
+                                                                        onLoadArticle(id, index)
+                                                                    }
+                                                                    totalDrag > threshold &&
+                                                                        readerState.previousArticle != null -> {
+                                                                        isHorizontalSwipe = true
+                                                                        val (id, index) = readerState.previousArticle
+                                                                        onLoadArticle(id, index)
+                                                                    }
+                                                                }
+                                                                totalDrag = 0f
+                                                            },
+                                                            onDragCancel = { totalDrag = 0f },
+                                                            onHorizontalDrag = { _, dragAmount ->
+                                                                totalDrag += dragAmount
+                                                            },
+                                                        )
+                                                    }
+                                                } else Modifier
+                                            ),
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         Content(
