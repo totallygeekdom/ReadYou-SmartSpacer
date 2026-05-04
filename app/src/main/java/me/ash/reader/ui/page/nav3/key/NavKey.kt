@@ -1,6 +1,5 @@
 package me.ash.reader.ui.page.nav3.key
 
-import androidx.compose.runtime.saveable.Saver
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
@@ -15,11 +14,11 @@ sealed interface Route : NavKey {
     //    @Serializable data object Flow : Route
 
     @Serializable
-    data class Reading(val articleId: String?) : Route {
-        companion object {
-            val Saver = Saver<Reading, String>(save = { it.articleId }, restore = { Reading(it) })
-        }
-    }
+    data class Reading(
+        val articleId: String?,
+        val feedId: String? = null,
+        val groupId: String? = null,
+    ) : Route
 
     // Settings
     @Serializable data object Settings : Route

@@ -25,6 +25,7 @@ import androidx.navigation3.ui.NavDisplay
 import kotlinx.coroutines.delay
 import me.ash.reader.ui.motion.materialSharedAxisXIn
 import me.ash.reader.ui.motion.materialSharedAxisXOut
+import me.ash.reader.domain.data.FilterStateUseCase
 import me.ash.reader.ui.page.adaptive.ArticleData
 import me.ash.reader.ui.page.adaptive.ArticleListReaderPage
 import me.ash.reader.ui.page.adaptive.ArticleListReaderViewModel
@@ -61,7 +62,7 @@ private const val INITIAL_OFFSET_FACTOR = 0.10f
     ExperimentalMaterial3AdaptiveApi::class,
 )
 @Composable
-fun AppEntry(backStack: NavBackStack<NavKey>) {
+fun AppEntry(backStack: NavBackStack<NavKey>, filterUseCase: FilterStateUseCase) {
     val subscribeViewModel = hiltViewModel<SubscribeViewModel>()
 
     val onBack: () -> Unit = {
@@ -126,6 +127,7 @@ fun AppEntry(backStack: NavBackStack<NavKey>) {
                                 )
 
                             LaunchedEffect(key) {
+                                filterUseCase.init(key.feedId, key.groupId)
                                 if (key.articleId != null) {
                                     delay(50L)
                                     navigator.navigateTo(

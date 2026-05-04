@@ -111,13 +111,13 @@ class MainActivity : AppCompatActivity() {
                                 else
                                     when (launchAction) {
                                         is LaunchAction.OpenArticle -> {
-                                            filterUseCase.init(
-                                                launchAction.feedId,
-                                                launchAction.groupId,
-                                            )
                                             listOf(
                                                 Route.Feeds,
-                                                Route.Reading(launchAction.articleId),
+                                                Route.Reading(
+                                                    articleId = launchAction.articleId,
+                                                    feedId = launchAction.feedId,
+                                                    groupId = launchAction.groupId,
+                                                ),
                                             )
                                         }
                                         is LaunchAction.Subscribe -> {
@@ -139,7 +139,7 @@ class MainActivity : AppCompatActivity() {
                             val backStack = rememberNavBackStack(*startDestination.toTypedArray())
 
                             NewIntentHandlerEffect(backStack, subscribeViewModel)
-                            AppEntry(backStack)
+                            AppEntry(backStack, filterUseCase)
                         }
                     }
                 }
@@ -160,7 +160,6 @@ class MainActivity : AppCompatActivity() {
                         when (action) {
                             is LaunchAction.OpenArticle -> {
                                 val (articleId, feedId, groupId) = action
-                                filterUseCase.init(feedId, groupId)
                                 val readingIndex = backStack.indexOfFirst { it is Route.Reading }
                                 if (readingIndex != -1) {
                                     repeat(backStack.size - readingIndex) {
@@ -169,7 +168,13 @@ class MainActivity : AppCompatActivity() {
                                 }
                                 scope.launch {
                                     delay(500L)
-                                    backStack.add(Reading(articleId = articleId))
+                                    backStack.add(
+                                        Reading(
+                                            articleId = articleId,
+                                            feedId = feedId,
+                                            groupId = groupId,
+                                        )
+                                    )
                                 }
                             }
 
@@ -180,14 +185,19 @@ class MainActivity : AppCompatActivity() {
                                         accountId != accountService.getCurrentAccountId()
                                 )
                                     return@Consumer
-                                filterUseCase.init(feedId, groupId)
                                 val readingIndex = backStack.indexOfFirst { it is Reading }
                                 if (readingIndex != -1) {
                                     repeat(backStack.size - readingIndex) {
                                         backStack.removeLastOrNull()
                                     }
                                 }
-                                backStack.add(Reading(articleId = null))
+                                backStack.add(
+                                    Reading(
+                                        articleId = null,
+                                        feedId = feedId,
+                                        groupId = groupId,
+                                    )
+                                )
                             }
 
                             is LaunchAction.Subscribe -> {
