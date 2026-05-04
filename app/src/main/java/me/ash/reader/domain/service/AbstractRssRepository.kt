@@ -1,5 +1,7 @@
 package me.ash.reader.domain.service
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.work.ListenableWorker
@@ -39,7 +41,9 @@ abstract class AbstractRssRepository(
     private val dispatcherIO: CoroutineDispatcher,
     private val dispatcherDefault: CoroutineDispatcher,
     private val accountService: AccountService,
+    private val context: Context,
 ) {
+    private val widgetArticlesUri: Uri = Uri.parse("content://me.ash.reader.widget.articles")
 
     open val importSubscription: Boolean = true
     open val addSubscription: Boolean = true
@@ -127,6 +131,7 @@ abstract class AbstractRssRepository(
                 articleDao.markAllAsRead(accountId, isUnread, before ?: Date(Long.MAX_VALUE))
             }
         }
+        context.contentResolver.notifyChange(widgetArticlesUri, null)
     }
 
     open suspend fun batchMarkAsRead(articleIds: Set<String>, isUnread: Boolean) {
@@ -137,6 +142,7 @@ abstract class AbstractRssRepository(
             ?.forEachIndexed { index, it ->
                 articleDao.markAsReadByIdSet(accountId, it.toSet(), isUnread)
             }
+        context.contentResolver.notifyChange(widgetArticlesUri, null)
     }
 
     open suspend fun syncReadStatus(articleIds: Set<String>, isUnread: Boolean): Set<String> {

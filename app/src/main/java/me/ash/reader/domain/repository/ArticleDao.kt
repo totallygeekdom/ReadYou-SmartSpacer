@@ -917,4 +917,19 @@ interface ArticleDao {
 
         return articles.filterNot { existingArticles.containsKey(it.link) }.also { insertList(it) }
     }
+
+    @Query("SELECT id, isUnread, isStarred FROM article WHERE id IN (:ids)")
+    suspend fun queryReadStateByIds(ids: List<String>): List<ArticleMeta>
+
+    @Transaction
+    suspend fun insertListPreservingReadState(articles: List<Article>) {
+        if (articles.isEmpty()) return
+        val existingReadState = queryReadStateByIds(articles.map { it.id })
+            .associateBy { it.id }
+        val preserved = articles.map { article ->
+            val existing = existingReadState[article.id]
+            if (existing != null && !existing.isUnread) article.copy(isUnread = false) else article
+        }
+        insert(*preserved.toTypedArray())
+    }
 }
