@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -141,4 +144,96 @@ fun BoxScope.PullToLoadIndicator(
         }
     }
 
+}
+
+@Composable
+fun BoxScope.SwipeToLoadIndicator(
+    modifier: Modifier = Modifier,
+    state: PullToLoadState,
+    canLoadPrevious: Boolean = true,
+    canLoadNext: Boolean = true,
+) {
+    val hapticFeedback = LocalHapticFeedback.current
+    val status = state.status
+
+    LaunchedEffect(status) {
+        when {
+            canLoadPrevious && status == PulledDown -> {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+            }
+            canLoadNext && status == PulledUp -> {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+            }
+            else -> {}
+        }
+    }
+
+    val fraction = state.offsetFraction
+    val absFraction = abs(fraction)
+
+    // PulledDown = swiped right = going to previous; PulledUp = swiped left = going to next
+    val imageVector = when (status) {
+        PulledDown -> Icons.Rounded.KeyboardArrowLeft
+        PulledUp -> Icons.Rounded.KeyboardArrowRight
+        else -> null
+    }
+
+    // fraction < 0 = swiping left = next article comes from right → indicator at right edge
+    val alignment = if (fraction < 0f) Alignment.CenterEnd else Alignment.CenterStart
+
+    val visible = remember(status, canLoadPrevious, canLoadNext) {
+        when (status) {
+            Idle -> false
+            PullingUp, PulledUp -> canLoadNext
+            PulledDown, PullingDown -> canLoadPrevious
+        }
+    }
+
+    if (visible && !state.isSettled) {
+        Surface(
+            modifier = modifier
+                .align(alignment)
+                .padding(vertical = 16.dp)
+                .offset {
+                    IntOffset(
+                        x = (fraction * PullToLoadDefaults.ContentOffsetMultiple * .5f).dp.roundToPx(),
+                        y = 0,
+                    )
+                }
+                .height(36.dp),
+            color = MaterialTheme.colorScheme.primaryFixed,
+            shape = MaterialTheme.shapes.extraLarge,
+        ) {
+            Row(modifier = Modifier.align(Alignment.Center)) {
+                AnimatedContent(
+                    targetState = imageVector,
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    transitionSpec = {
+                        (fadeIn(animationSpec = tween(220, delayMillis = 0)))
+                            .togetherWith(fadeOut(animationSpec = tween(90)))
+                    },
+                    label = "",
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (it != null) {
+                        Icon(
+                            imageVector = it,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryFixedVariant,
+                            modifier = Modifier
+                                .padding(vertical = 4.dp)
+                                .padding(horizontal = (2 * absFraction).dp)
+                                .size(32.dp),
+                        )
+                    } else {
+                        Spacer(
+                            modifier = Modifier
+                                .height(36.dp)
+                                .width((12 * absFraction).dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

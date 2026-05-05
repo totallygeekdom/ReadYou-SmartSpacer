@@ -15,7 +15,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyListState
@@ -36,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
@@ -238,6 +236,27 @@ fun ReadingPage(
                                             } else null,
                                     )
 
+                                val swipeState =
+                                    rememberPullToLoadState(
+                                        key = content,
+                                        onLoadNext =
+                                            if (isNextArticleAvailable) {
+                                                {
+                                                    isHorizontalSwipe = true
+                                                    val (id, index) = readerState.nextArticle
+                                                    onLoadArticle(id, index)
+                                                }
+                                            } else null,
+                                        onLoadPrevious =
+                                            if (isPreviousArticleAvailable) {
+                                                {
+                                                    isHorizontalSwipe = true
+                                                    val (id, index) = readerState.previousArticle
+                                                    onLoadArticle(id, index)
+                                                }
+                                            } else null,
+                                    )
+
                                 val listState =
                                     rememberSaveable(
                                         inputs = arrayOf(content),
@@ -285,54 +304,24 @@ fun ReadingPage(
                                         }
                                 ) {
                                     Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .then(
-                                                if (isSwipeToSwitchArticleEnabled) {
-                                                    Modifier.pointerInput(
-                                                        readerState.nextArticle,
-                                                        readerState.previousArticle,
-                                                    ) {
-                                                        var totalDrag = 0f
-                                                        detectHorizontalDragGestures(
-                                                            onDragEnd = {
-                                                                val threshold = size.width * 0.25f
-                                                                when {
-                                                                    totalDrag < -threshold &&
-                                                                        readerState.nextArticle != null -> {
-                                                                        isHorizontalSwipe = true
-                                                                        val (id, index) = readerState.nextArticle
-                                                                        onLoadArticle(id, index)
-                                                                    }
-                                                                    totalDrag > threshold &&
-                                                                        readerState.previousArticle != null -> {
-                                                                        isHorizontalSwipe = true
-                                                                        val (id, index) = readerState.previousArticle
-                                                                        onLoadArticle(id, index)
-                                                                    }
-                                                                }
-                                                                totalDrag = 0f
-                                                            },
-                                                            onDragCancel = { totalDrag = 0f },
-                                                            onHorizontalDrag = { _, dragAmount ->
-                                                                totalDrag += dragAmount
-                                                            },
-                                                        )
-                                                    }
-                                                } else Modifier
-                                            ),
+                                        modifier = Modifier.fillMaxSize(),
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         Content(
                                             modifier =
-                                                Modifier.pullToLoad(
-                                                    state = state,
-                                                    onScroll = { f ->
-                                                        if (abs(f) > 2f)
-                                                            isReaderScrollingDown = f < 0f
-                                                    },
-                                                    enabled = isPullToSwitchArticleEnabled,
-                                                ),
+                                                Modifier
+                                                    .pullToLoad(
+                                                        state = state,
+                                                        onScroll = { f ->
+                                                            if (abs(f) > 2f)
+                                                                isReaderScrollingDown = f < 0f
+                                                        },
+                                                        enabled = isPullToSwitchArticleEnabled,
+                                                    )
+                                                    .swipeToLoad(
+                                                        state = swipeState,
+                                                        enabled = isSwipeToSwitchArticleEnabled,
+                                                    ),
                                             contentPadding = paddings,
                                             content = content.text ?: "",
                                             feedName = feedName,
@@ -350,6 +339,11 @@ fun ReadingPage(
                                         )
                                         PullToLoadIndicator(
                                             state = state,
+                                            canLoadPrevious = isPreviousArticleAvailable,
+                                            canLoadNext = isNextArticleAvailable,
+                                        )
+                                        SwipeToLoadIndicator(
+                                            state = swipeState,
                                             canLoadPrevious = isPreviousArticleAvailable,
                                             canLoadNext = isNextArticleAvailable,
                                         )
