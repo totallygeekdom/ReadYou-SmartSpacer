@@ -168,7 +168,7 @@ fun ArticleListReaderPage(
                     if (contentKey == null) {
                         delay(100L)
                         viewModel.clearReadingData()
-                    } else {
+                    } else if (viewModel.readerStateStateFlow.value.articleId != contentKey.articleId) {
                         viewModel.initData(
                             articleId = contentKey.articleId,
                             listIndex = contentKey.listIndex,
