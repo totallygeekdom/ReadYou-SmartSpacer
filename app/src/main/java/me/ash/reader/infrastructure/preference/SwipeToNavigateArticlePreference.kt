@@ -47,15 +47,18 @@ sealed class SwipeToNavigateArticlePreference(val value: Int) : Preference() {
         val values = listOf(None, Horizontal, Vertical)
 
         fun fromPreference(preference: Preferences): SwipeToNavigateArticlePreference {
-            val storedValue =
-                preference[DataStoreKey.keys[swipeToNavigateArticle]?.key as? Preferences.Key<Int>]
+            @Suppress("UNCHECKED_CAST")
+            val intKey = DataStoreKey.keys[swipeToNavigateArticle]?.key as? Preferences.Key<Int>
+            val storedValue = intKey?.let { preference[it] }
             if (storedValue != null) return fromValue(storedValue)
 
             // Migrate from old boolean keys
-            val hadPull =
-                preference[DataStoreKey.keys[DataStoreKey.pullToSwitchArticle]?.key as? Preferences.Key<Boolean>]
-            val hadSwipe =
-                preference[DataStoreKey.keys[DataStoreKey.swipeToSwitchArticle]?.key as? Preferences.Key<Boolean>]
+            @Suppress("UNCHECKED_CAST")
+            val pullKey = DataStoreKey.keys[DataStoreKey.pullToSwitchArticle]?.key as? Preferences.Key<Boolean>
+            @Suppress("UNCHECKED_CAST")
+            val swipeKey = DataStoreKey.keys[DataStoreKey.swipeToSwitchArticle]?.key as? Preferences.Key<Boolean>
+            val hadPull = pullKey?.let { preference[it] }
+            val hadSwipe = swipeKey?.let { preference[it] }
             return when {
                 hadSwipe == true -> Horizontal
                 hadPull == true -> Vertical
