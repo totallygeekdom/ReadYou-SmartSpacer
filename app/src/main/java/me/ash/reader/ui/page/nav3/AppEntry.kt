@@ -13,7 +13,6 @@ import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -26,6 +25,7 @@ import androidx.navigation3.ui.NavDisplay
 import kotlinx.coroutines.delay
 import me.ash.reader.ui.motion.materialSharedAxisXIn
 import me.ash.reader.ui.motion.materialSharedAxisXOut
+import me.ash.reader.domain.data.FilterStateUseCase
 import me.ash.reader.ui.page.adaptive.ArticleData
 import me.ash.reader.ui.page.adaptive.ArticleListReaderPage
 import me.ash.reader.ui.page.adaptive.ArticleListReaderViewModel
@@ -62,7 +62,7 @@ private const val INITIAL_OFFSET_FACTOR = 0.10f
     ExperimentalMaterial3AdaptiveApi::class,
 )
 @Composable
-fun AppEntry(backStack: NavBackStack<NavKey>) {
+fun AppEntry(backStack: NavBackStack<NavKey>, filterUseCase: FilterStateUseCase) {
     val subscribeViewModel = hiltViewModel<SubscribeViewModel>()
 
     val onBack: () -> Unit = {
@@ -70,12 +70,6 @@ fun AppEntry(backStack: NavBackStack<NavKey>) {
     }
 
     val scaffoldDirective = calculatePaneScaffoldDirective(currentWindowAdaptiveInfo())
-
-    val navigator =
-        rememberListDetailPaneScaffoldNavigator<ArticleData>(
-            scaffoldDirective = scaffoldDirective,
-            isDestinationHistoryAware = false,
-        )
 
     SharedTransitionLayout {
         NavDisplay(
@@ -126,9 +120,14 @@ fun AppEntry(backStack: NavBackStack<NavKey>) {
                     }
                     is Route.Reading -> {
                         NavEntry(key) {
-                            val key = rememberSaveable(saver = Route.Reading.Saver) { key }
+                            val navigator =
+                                rememberListDetailPaneScaffoldNavigator<ArticleData>(
+                                    scaffoldDirective = scaffoldDirective,
+                                    isDestinationHistoryAware = false,
+                                )
 
                             LaunchedEffect(key) {
+                                filterUseCase.init(key.feedId, key.groupId)
                                 if (key.articleId != null) {
                                     delay(50L)
                                     navigator.navigateTo(

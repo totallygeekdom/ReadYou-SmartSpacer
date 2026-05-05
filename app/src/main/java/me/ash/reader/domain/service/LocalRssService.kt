@@ -53,6 +53,7 @@ constructor(
         ioDispatcher,
         defaultDispatcher,
         accountService,
+        context,
     ) {
 
     override suspend fun sync(

@@ -63,6 +63,7 @@ constructor(
         ioDispatcher,
         defaultDispatcher,
         accountService,
+        context,
     ) {
 
     override val importSubscription: Boolean = false
@@ -260,7 +261,7 @@ constructor(
             }
 
             if (allArticles.isNotEmpty()) {
-                articleDao.insert(*allArticles.toTypedArray())
+                articleDao.insertListPreservingReadState(allArticles)
                 val notificationFeeds =
                     feedDao.queryNotificationEnabled(accountId).associateBy { it.id }
                 val notificationFeedIds = notificationFeeds.keys

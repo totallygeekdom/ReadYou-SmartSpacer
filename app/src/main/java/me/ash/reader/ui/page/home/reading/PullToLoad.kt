@@ -8,7 +8,9 @@ import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.MutatorMutex
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -365,3 +367,27 @@ fun Modifier.pullToLoad(
         }
         else this
     )
+
+fun Modifier.swipeToLoad(
+    state: PullToLoadState,
+    contentOffsetX: Density.(Float) -> Int = { fraction ->
+        (ContentOffsetMultiple.dp * fraction).roundToPx()
+    },
+    enabled: Boolean = true,
+): Modifier =
+    this
+        .then(
+            if (enabled) Modifier.pointerInput(state) {
+                detectHorizontalDragGestures(
+                    onDragEnd = { state.onRelease() },
+                    onDragCancel = { state.onRelease() },
+                    onHorizontalDrag = { _, dragAmount -> state.onPull(dragAmount) },
+                )
+            } else Modifier
+        )
+        .then(
+            if (enabled) Modifier.offset {
+                IntOffset(x = contentOffsetX(state.offsetFraction), y = 0)
+            }
+            else Modifier
+        )

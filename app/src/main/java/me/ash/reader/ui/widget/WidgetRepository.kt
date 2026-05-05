@@ -115,6 +115,7 @@ constructor(
                     title = article.title,
                     imgUrl = article.img,
                     feedName = feed.name,
+                    feedId = feed.id,
                     id = article.id,
                     date = article.date.time,
                 )
@@ -180,5 +181,6 @@ data class Article(
     val title: String,
     val imgUrl: String? = null,
     val feedName: String,
+    val feedId: String = "",
     val date: Long = 0L,
 )

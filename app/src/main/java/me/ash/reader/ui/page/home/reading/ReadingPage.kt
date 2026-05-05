@@ -9,7 +9,9 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -47,6 +49,7 @@ import me.ash.reader.infrastructure.preference.LocalPullToSwitchArticle
 import me.ash.reader.infrastructure.preference.LocalReadingAutoHideToolbar
 import me.ash.reader.infrastructure.preference.LocalReadingBoldCharacters
 import me.ash.reader.infrastructure.preference.LocalReadingTextLineHeight
+import me.ash.reader.infrastructure.preference.LocalSwipeToSwitchArticle
 import me.ash.reader.infrastructure.preference.not
 import me.ash.reader.ui.ext.collectAsStateValue
 import me.ash.reader.ui.ext.showToast
@@ -71,6 +74,7 @@ fun ReadingPage(
     val context = LocalContext.current
     val hapticFeedback = LocalHapticFeedback.current
     val isPullToSwitchArticleEnabled = LocalPullToSwitchArticle.current.value
+    val isSwipeToSwitchArticleEnabled = LocalSwipeToSwitchArticle.current.value
     val readingUiState = viewModel.readingUiState.collectAsStateValue()
     val readerState = viewModel.readerStateStateFlow.collectAsStateValue()
     val boldCharacters = LocalReadingBoldCharacters.current
@@ -78,6 +82,7 @@ fun ReadingPage(
 
     var isReaderScrollingDown by remember { mutableStateOf(false) }
     var showFullScreenImageViewer by remember { mutableStateOf(false) }
+    var isHorizontalSwipe by remember { mutableStateOf(false) }
 
     var currentImageData by remember { mutableStateOf(ImageData()) }
 
@@ -140,34 +145,71 @@ fun ReadingPage(
                                 }
                             val exit = 100
                             val enter = exit * 2
-                            (slideInVertically(
-                                initialOffsetY = { (it * 0.2f * direction).toInt() },
-                                animationSpec =
-                                    spring(
-                                        dampingRatio = .9f,
-                                        stiffness = Spring.StiffnessLow,
-                                        visibilityThreshold = IntOffset.VisibilityThreshold,
-                                    ),
-                            ) +
-                                fadeIn(
-                                    tween(
-                                        delayMillis = exit,
-                                        durationMillis = enter,
-                                        easing = LinearOutSlowInEasing,
-                                    )
-                                )) togetherWith
-                                (slideOutVertically(
-                                    targetOffsetY = { (it * -0.2f * direction).toInt() },
+                            if (isHorizontalSwipe) {
+                                (slideInHorizontally(
+                                    initialOffsetX = { (it * 0.4f * direction).toInt() },
                                     animationSpec =
                                         spring(
-                                            dampingRatio = Spring.DampingRatioNoBouncy,
+                                            dampingRatio = .9f,
                                             stiffness = Spring.StiffnessLow,
                                             visibilityThreshold = IntOffset.VisibilityThreshold,
                                         ),
                                 ) +
-                                    fadeOut(
-                                        tween(durationMillis = exit, easing = FastOutLinearInEasing)
-                                    ))
+                                    fadeIn(
+                                        tween(
+                                            delayMillis = exit,
+                                            durationMillis = enter,
+                                            easing = LinearOutSlowInEasing,
+                                        )
+                                    )) togetherWith
+                                    (slideOutHorizontally(
+                                        targetOffsetX = { (it * -0.4f * direction).toInt() },
+                                        animationSpec =
+                                            spring(
+                                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                                stiffness = Spring.StiffnessLow,
+                                                visibilityThreshold = IntOffset.VisibilityThreshold,
+                                            ),
+                                    ) +
+                                        fadeOut(
+                                            tween(
+                                                durationMillis = exit,
+                                                easing = FastOutLinearInEasing,
+                                            )
+                                        ))
+                            } else {
+                                (slideInVertically(
+                                    initialOffsetY = { (it * 0.2f * direction).toInt() },
+                                    animationSpec =
+                                        spring(
+                                            dampingRatio = .9f,
+                                            stiffness = Spring.StiffnessLow,
+                                            visibilityThreshold = IntOffset.VisibilityThreshold,
+                                        ),
+                                ) +
+                                    fadeIn(
+                                        tween(
+                                            delayMillis = exit,
+                                            durationMillis = enter,
+                                            easing = LinearOutSlowInEasing,
+                                        )
+                                    )) togetherWith
+                                    (slideOutVertically(
+                                        targetOffsetY = { (it * -0.2f * direction).toInt() },
+                                        animationSpec =
+                                            spring(
+                                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                                stiffness = Spring.StiffnessLow,
+                                                visibilityThreshold = IntOffset.VisibilityThreshold,
+                                            ),
+                                    ) +
+                                        fadeOut(
+                                            tween(
+                                                durationMillis = exit,
+                                                easing = FastOutLinearInEasing,
+                                            )
+                                        ))
+                            }
                         },
                         label = "",
                     ) {
@@ -179,6 +221,7 @@ fun ReadingPage(
                                         onLoadNext =
                                             if (isNextArticleAvailable) {
                                                 {
+                                                    isHorizontalSwipe = false
                                                     val (id, index) = readerState.nextArticle
                                                     onLoadArticle(id, index)
                                                 }
@@ -186,6 +229,28 @@ fun ReadingPage(
                                         onLoadPrevious =
                                             if (isPreviousArticleAvailable) {
                                                 {
+                                                    isHorizontalSwipe = false
+                                                    val (id, index) = readerState.previousArticle
+                                                    onLoadArticle(id, index)
+                                                }
+                                            } else null,
+                                    )
+
+                                val swipeState =
+                                    rememberPullToLoadState(
+                                        key = content,
+                                        onLoadNext =
+                                            if (isNextArticleAvailable) {
+                                                {
+                                                    isHorizontalSwipe = true
+                                                    val (id, index) = readerState.nextArticle
+                                                    onLoadArticle(id, index)
+                                                }
+                                            } else null,
+                                        onLoadPrevious =
+                                            if (isPreviousArticleAvailable) {
+                                                {
+                                                    isHorizontalSwipe = true
                                                     val (id, index) = readerState.previousArticle
                                                     onLoadArticle(id, index)
                                                 }
@@ -244,14 +309,19 @@ fun ReadingPage(
                                     ) {
                                         Content(
                                             modifier =
-                                                Modifier.pullToLoad(
-                                                    state = state,
-                                                    onScroll = { f ->
-                                                        if (abs(f) > 2f)
-                                                            isReaderScrollingDown = f < 0f
-                                                    },
-                                                    enabled = isPullToSwitchArticleEnabled,
-                                                ),
+                                                Modifier
+                                                    .pullToLoad(
+                                                        state = state,
+                                                        onScroll = { f ->
+                                                            if (abs(f) > 2f)
+                                                                isReaderScrollingDown = f < 0f
+                                                        },
+                                                        enabled = isPullToSwitchArticleEnabled,
+                                                    )
+                                                    .swipeToLoad(
+                                                        state = swipeState,
+                                                        enabled = isSwipeToSwitchArticleEnabled,
+                                                    ),
                                             contentPadding = paddings,
                                             content = content.text ?: "",
                                             feedName = feedName,
@@ -269,6 +339,11 @@ fun ReadingPage(
                                         )
                                         PullToLoadIndicator(
                                             state = state,
+                                            canLoadPrevious = isPreviousArticleAvailable,
+                                            canLoadNext = isNextArticleAvailable,
+                                        )
+                                        SwipeToLoadIndicator(
+                                            state = swipeState,
                                             canLoadPrevious = isPreviousArticleAvailable,
                                             canLoadNext = isNextArticleAvailable,
                                         )
