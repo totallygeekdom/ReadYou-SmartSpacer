@@ -128,7 +128,9 @@ fun AppEntry(backStack: NavBackStack<NavKey>, filterUseCase: FilterStateUseCase)
 
                             LaunchedEffect(key) {
                                 filterUseCase.init(key.feedId, key.groupId)
-                                if (key.articleId != null) {
+                                if (key.articleId != null &&
+                                    navigator.currentDestination?.contentKey?.articleId != key.articleId
+                                ) {
                                     delay(50L)
                                     navigator.navigateTo(
                                         ListDetailPaneScaffoldRole.Detail,

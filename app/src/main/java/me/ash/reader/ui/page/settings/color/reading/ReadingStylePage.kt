@@ -39,8 +39,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import me.ash.reader.R
-import me.ash.reader.infrastructure.preference.LocalPullToSwitchArticle
 import me.ash.reader.infrastructure.preference.LocalReadingAutoHideToolbar
+import me.ash.reader.infrastructure.preference.LocalSwipeToNavigateArticle
+import me.ash.reader.infrastructure.preference.SwipeToNavigateArticlePreference
 import me.ash.reader.infrastructure.preference.LocalReadingBoldCharacters
 import me.ash.reader.infrastructure.preference.LocalReadingFonts
 import me.ash.reader.infrastructure.preference.LocalReadingPageTonalElevation
@@ -81,13 +82,14 @@ fun ReadingStylePage(
     val tonalElevation = LocalReadingPageTonalElevation.current
     val fonts = LocalReadingFonts.current
     val autoHideToolbar = LocalReadingAutoHideToolbar.current
-    val pullToSwitchArticle = LocalPullToSwitchArticle.current
+    val swipeToNavigateArticle = LocalSwipeToNavigateArticle.current
     val renderer = LocalReadingRenderer.current
     val boldCharacters = LocalReadingBoldCharacters.current
 
     var tonalElevationDialogVisible by remember { mutableStateOf(false) }
     var rendererDialogVisible by remember { mutableStateOf(false) }
     var fontsDialogVisible by remember { mutableStateOf(false) }
+    var swipeToNavigateDialogVisible by remember { mutableStateOf(false) }
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -205,12 +207,10 @@ fun ReadingStylePage(
                     ) {}
 
                     SettingItem(
-                        title = stringResource(id = R.string.pull_to_switch_article),
-                        onClick = { pullToSwitchArticle.toggle(context, scope) }) {
-                        RYSwitch(activated = pullToSwitchArticle.value, onClick = {
-                            pullToSwitchArticle.toggle(context, scope)
-                        })
-                    }
+                        title = stringResource(id = R.string.swipe_to_navigate_article),
+                        desc = swipeToNavigateArticle.description(),
+                        onClick = { swipeToNavigateDialogVisible = true },
+                    ) {}
                     Subtitle(
                         modifier = Modifier.padding(horizontal = 24.dp),
                         text = stringResource(R.string.toolbars)
@@ -316,4 +316,20 @@ fun ReadingStylePage(
     ) {
         fontsDialogVisible = false
     }
+
+    RadioDialog(
+        visible = swipeToNavigateDialogVisible,
+        title = stringResource(R.string.swipe_to_navigate_article),
+        options = SwipeToNavigateArticlePreference.values.map {
+            RadioDialogOption(
+                text = it.description(),
+                selected = it == swipeToNavigateArticle,
+            ) {
+                it.put(context, scope)
+            }
+        },
+        onDismissRequest = {
+            swipeToNavigateDialogVisible = false
+        }
+    )
 }

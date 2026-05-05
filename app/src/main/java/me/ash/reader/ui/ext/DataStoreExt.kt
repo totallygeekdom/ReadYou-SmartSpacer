@@ -195,6 +195,7 @@ sealed interface PreferencesKey {
         const val pullToLoadNextFeed = "pullToLoadNextFeed"
         const val pullToSwitchArticle = "pullToSwitchArticle"
         const val swipeToSwitchArticle = "swipeToSwitchArticle"
+        const val swipeToNavigateArticle = "swipeToNavigateArticle"
         const val openLink = "openLink"
         const val openLinkAppSpecificBrowser = "openLinkAppSpecificBrowser"
         const val sharedContent = "sharedContent"
@@ -272,6 +273,7 @@ sealed interface PreferencesKey {
                 BooleanKey(pullToLoadNextFeed),
                 BooleanKey(pullToSwitchArticle),
                 BooleanKey(swipeToSwitchArticle),
+                IntKey(swipeToNavigateArticle),
                 IntKey(openLink),
                 StringKey(openLinkAppSpecificBrowser),
                 IntKey(sharedContent),
@@ -359,6 +361,7 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
         const val pullToLoadNextFeed = "pullToLoadNextFeed"
         const val pullToSwitchArticle = "pullToSwitchArticle"
         const val swipeToSwitchArticle = "swipeToSwitchArticle"
+        const val swipeToNavigateArticle = "swipeToNavigateArticle"
         const val openLink = "openLink"
         const val openLinkAppSpecificBrowser = "openLinkAppSpecificBrowser"
         const val sharedContent = "sharedContent"
@@ -509,6 +512,8 @@ data class DataStoreKey<T>(val key: Preferences.Key<T>, val type: Class<T>) {
                     DataStoreKey(booleanPreferencesKey(pullToSwitchArticle), Boolean::class.java),
                 swipeToSwitchArticle to
                     DataStoreKey(booleanPreferencesKey(swipeToSwitchArticle), Boolean::class.java),
+                swipeToNavigateArticle to
+                    DataStoreKey(intPreferencesKey(swipeToNavigateArticle), Int::class.java),
                 openLink to DataStoreKey(intPreferencesKey(openLink), Int::class.java),
                 openLinkAppSpecificBrowser to
                     DataStoreKey(

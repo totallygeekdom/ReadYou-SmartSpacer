@@ -13,7 +13,7 @@ class ArticleWidgetContentProvider : ContentProvider() {
 
     companion object {
         const val AUTHORITY = "me.ash.reader.widget.articles"
-        val COLUMNS = arrayOf("id", "feed_name", "title", "date", "feed_id", "filter_feed_id", "filter_group_id")
+        val COLUMNS = arrayOf("id", "feed_name", "title", "date", "feed_id", "filter_feed_id", "filter_group_id", "is_read")
 
         private const val MATCH_ARTICLES = 1
         private val uriMatcher = UriMatcher(UriMatcher.NO_MATCH).apply {
@@ -42,7 +42,7 @@ class ArticleWidgetContentProvider : ContentProvider() {
 
         val cursor = MatrixCursor(COLUMNS)
         articles.take(15).forEach { article ->
-            cursor.addRow(arrayOf(article.id, article.feedName, article.title, article.date, article.feedId, filterFeedId, filterGroupId))
+            cursor.addRow(arrayOf(article.id, article.feedName, article.title, article.date, article.feedId, filterFeedId, filterGroupId, if (article.isRead) 1 else 0))
         }
         return cursor
     }

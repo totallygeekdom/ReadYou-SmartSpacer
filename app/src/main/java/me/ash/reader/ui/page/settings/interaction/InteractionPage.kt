@@ -31,8 +31,8 @@ import me.ash.reader.infrastructure.preference.LocalInitialPage
 import me.ash.reader.infrastructure.preference.LocalMarkAsReadOnScroll
 import me.ash.reader.infrastructure.preference.LocalOpenLink
 import me.ash.reader.infrastructure.preference.LocalOpenLinkSpecificBrowser
-import me.ash.reader.infrastructure.preference.LocalPullToSwitchArticle
-import me.ash.reader.infrastructure.preference.LocalSwipeToSwitchArticle
+import me.ash.reader.infrastructure.preference.LocalSwipeToNavigateArticle
+import me.ash.reader.infrastructure.preference.SwipeToNavigateArticlePreference
 import me.ash.reader.infrastructure.preference.LocalSettings
 import me.ash.reader.infrastructure.preference.LocalSharedContent
 import me.ash.reader.infrastructure.preference.LocalSortUnreadArticles
@@ -65,8 +65,7 @@ fun InteractionPage(
     val markAsReadOnScroll = LocalMarkAsReadOnScroll.current
     val hideEmptyGroups = LocalHideEmptyGroups.current
     val sortUnreadArticles = LocalSortUnreadArticles.current
-    val pullToSwitchArticle = LocalPullToSwitchArticle.current
-    val swipeToSwitchArticle = LocalSwipeToSwitchArticle.current
+    val swipeToNavigateArticle = LocalSwipeToNavigateArticle.current
     val openLink = LocalOpenLink.current
     val openLinkSpecificBrowser = LocalOpenLinkSpecificBrowser.current
     val sharedContent = LocalSharedContent.current
@@ -86,6 +85,7 @@ fun InteractionPage(
     var sharedContentDialogVisible by remember { mutableStateOf(false) }
     var showSortUnreadArticlesDialog by remember { mutableStateOf(false) }
     var showPullToLoadDialog by remember { mutableStateOf(false) }
+    var showSwipeToNavigateDialog by remember { mutableStateOf(false) }
 
     RYScaffold(
         containerColor = MaterialTheme.colorScheme.surface onLight MaterialTheme.colorScheme.inverseOnSurface,
@@ -194,19 +194,10 @@ fun InteractionPage(
                         text = stringResource(R.string.reading_page),
                     )
                     SettingItem(
-                        title = stringResource(id = R.string.pull_to_switch_article),
-                        onClick = { pullToSwitchArticle.toggle(context, scope) }) {
-                        RYSwitch(activated = pullToSwitchArticle.value) {
-                            pullToSwitchArticle.toggle(context, scope)
-                        }
-                    }
-                    SettingItem(
-                        title = stringResource(id = R.string.swipe_to_switch_article),
-                        onClick = { swipeToSwitchArticle.toggle(context, scope) }) {
-                        RYSwitch(activated = swipeToSwitchArticle.value) {
-                            swipeToSwitchArticle.toggle(context, scope)
-                        }
-                    }
+                        title = stringResource(id = R.string.swipe_to_navigate_article),
+                        desc = swipeToNavigateArticle.description(),
+                        onClick = { showSwipeToNavigateDialog = true },
+                    ) {}
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Subtitle(
@@ -395,6 +386,22 @@ fun InteractionPage(
         },
         onDismissRequest = {
             showPullToLoadDialog = false
+        }
+    )
+
+    RadioDialog(
+        visible = showSwipeToNavigateDialog,
+        title = stringResource(R.string.swipe_to_navigate_article),
+        options = SwipeToNavigateArticlePreference.values.map {
+            RadioDialogOption(
+                text = it.description(),
+                selected = it == swipeToNavigateArticle,
+            ) {
+                it.put(context, scope)
+            }
+        },
+        onDismissRequest = {
+            showSwipeToNavigateDialog = false
         }
     )
 }

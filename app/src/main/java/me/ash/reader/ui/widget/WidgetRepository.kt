@@ -104,11 +104,11 @@ constructor(
     private fun getArticles(dataSource: DataSource): Flow<List<Article>> =
         when (dataSource) {
             is DataSource.Account ->
-                articleDao.queryLatestUnreadArticles(accountId = dataSource.accountId)
+                articleDao.queryLatestArticles(accountId = dataSource.accountId)
             is DataSource.Feed ->
-                articleDao.queryLatestUnreadArticlesFromFeed(feedId = dataSource.feedId)
+                articleDao.queryLatestArticlesFromFeed(feedId = dataSource.feedId)
             is DataSource.Group ->
-                articleDao.queryLatestUnreadArticlesFromGroup(groupId = dataSource.groupId)
+                articleDao.queryLatestArticlesFromGroup(groupId = dataSource.groupId)
         }.map { items ->
             items.map { (article, feed) ->
                 Article(
@@ -118,6 +118,7 @@ constructor(
                     feedId = feed.id,
                     id = article.id,
                     date = article.date.time,
+                    isRead = !article.isUnread,
                 )
             }
         }
@@ -183,4 +184,5 @@ data class Article(
     val feedName: String,
     val feedId: String = "",
     val date: Long = 0L,
+    val isRead: Boolean = false,
 )
