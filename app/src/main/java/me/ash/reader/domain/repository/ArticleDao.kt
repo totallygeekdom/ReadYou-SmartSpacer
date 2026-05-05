@@ -841,6 +841,20 @@ interface ArticleDao {
     )
     fun queryLatestUnreadArticles(accountId: Int, limit: Int = 15): Flow<List<ArticleWithFeed>>
 
+    /**
+     * query the latest articles (read and unread) from account with id, limit count
+     */
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM article
+        WHERE accountId = :accountId
+        ORDER BY date desc
+        LIMIT :limit
+        """
+    )
+    fun queryLatestArticles(accountId: Int, limit: Int = 15): Flow<List<ArticleWithFeed>>
+
 
     /**
      * query the latest unread articles from feed with id, limit count
@@ -856,6 +870,20 @@ interface ArticleDao {
         """
     )
     fun queryLatestUnreadArticlesFromFeed(feedId: String, limit: Int = 15): Flow<List<ArticleWithFeed>>
+
+    /**
+     * query the latest articles (read and unread) from feed with id, limit count
+     */
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM article
+        WHERE feedId = :feedId
+        ORDER BY date desc
+        LIMIT :limit
+        """
+    )
+    fun queryLatestArticlesFromFeed(feedId: String, limit: Int = 15): Flow<List<ArticleWithFeed>>
 
 
     /**
@@ -873,6 +901,21 @@ interface ArticleDao {
         """
     )
     fun queryLatestUnreadArticlesFromGroup(groupId: String, limit: Int = 15): Flow<List<ArticleWithFeed>>
+
+    /**
+     * query the latest articles (read and unread) from group with id, limit count
+     */
+    @Transaction
+    @Query(
+        """
+        SELECT a.* FROM article AS a
+        LEFT JOIN feed AS f ON a.feedId = f.id
+        WHERE f.groupId = :groupId
+        ORDER BY a.date DESC
+        LIMIT :limit
+        """
+    )
+    fun queryLatestArticlesFromGroup(groupId: String, limit: Int = 15): Flow<List<ArticleWithFeed>>
 
 
     /**
