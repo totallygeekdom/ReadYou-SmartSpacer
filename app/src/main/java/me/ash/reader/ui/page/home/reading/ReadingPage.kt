@@ -45,11 +45,11 @@ import kotlin.math.abs
 import kotlinx.coroutines.launch
 import me.ash.reader.R
 import me.ash.reader.infrastructure.android.TextToSpeechManager
-import me.ash.reader.infrastructure.preference.LocalPullToSwitchArticle
 import me.ash.reader.infrastructure.preference.LocalReadingAutoHideToolbar
 import me.ash.reader.infrastructure.preference.LocalReadingBoldCharacters
 import me.ash.reader.infrastructure.preference.LocalReadingTextLineHeight
-import me.ash.reader.infrastructure.preference.LocalSwipeToSwitchArticle
+import me.ash.reader.infrastructure.preference.LocalSwipeToNavigateArticle
+import me.ash.reader.infrastructure.preference.SwipeToNavigateArticlePreference
 import me.ash.reader.infrastructure.preference.not
 import me.ash.reader.ui.ext.collectAsStateValue
 import me.ash.reader.ui.ext.showToast
@@ -73,8 +73,9 @@ fun ReadingPage(
 ) {
     val context = LocalContext.current
     val hapticFeedback = LocalHapticFeedback.current
-    val isPullToSwitchArticleEnabled = LocalPullToSwitchArticle.current.value
-    val isSwipeToSwitchArticleEnabled = LocalSwipeToSwitchArticle.current.value
+    val swipeToNavigate = LocalSwipeToNavigateArticle.current
+    val isPullToSwitchArticleEnabled = swipeToNavigate == SwipeToNavigateArticlePreference.Vertical
+    val isSwipeToSwitchArticleEnabled = swipeToNavigate == SwipeToNavigateArticlePreference.Horizontal
     val readingUiState = viewModel.readingUiState.collectAsStateValue()
     val readerState = viewModel.readerStateStateFlow.collectAsStateValue()
     val boldCharacters = LocalReadingBoldCharacters.current

@@ -217,20 +217,24 @@ class PullToLoadState internal constructor(
     private var offsetPulled by mutableFloatStateOf(0f)
     private var _threshold by mutableFloatStateOf(threshold)
     var isSettled by mutableStateOf(false)
+    private var retreatedAfterThreshold: Boolean = false
 
     internal fun onPull(pullDelta: Float): Float {
         isSettled = false
+        val prevAbsOffset = abs(offsetPulled)
         val consumed = if (offsetPulled.signOpposites(offsetPulled + pullDelta)) {
             -offsetPulled
         } else {
             pullDelta
         }
-        /*
-                Log.d(
-                    TAG,
-                    "onPull: currentOffset = $offsetPulled, pullDelta = $pullDelta, consumed = $consumed"
-                )*/
         offsetPulled += consumed
+        val currAbsOffset = abs(offsetPulled)
+        when {
+            currAbsOffset < 1f -> retreatedAfterThreshold = false
+            prevAbsOffset >= threshold && currAbsOffset < prevAbsOffset ->
+                retreatedAfterThreshold = true
+            currAbsOffset > prevAbsOffset -> retreatedAfterThreshold = false
+        }
         return consumed
     }
 
@@ -239,19 +243,20 @@ class PullToLoadState internal constructor(
     }
 
     internal fun onRelease(): Float {
-
+        val didRetreat = retreatedAfterThreshold
+        retreatedAfterThreshold = false
         when (status) {
             Status.PulledDown -> {
-                onLoadPrevious.value?.let { it() } ?: animateDistanceTo(0f)
-
+                if (didRetreat) animateDistanceTo(0f)
+                else onLoadPrevious.value?.let { it() } ?: animateDistanceTo(0f)
             }
 
             Status.PulledUp -> {
-                onLoadNext.value?.let { it() } ?: animateDistanceTo(0f)
+                if (didRetreat) animateDistanceTo(0f)
+                else onLoadNext.value?.let { it() } ?: animateDistanceTo(0f)
             }
 
             else -> {
-                // Snap to 0f and hide the indicator
                 animateDistanceTo(0f)
             }
         }

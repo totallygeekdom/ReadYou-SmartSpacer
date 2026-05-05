@@ -13,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.util.Consumer
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -26,7 +25,6 @@ import coil.ImageLoader
 import dagger.hilt.android.AndroidEntryPoint
 import java.lang.reflect.Field
 import javax.inject.Inject
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.ash.reader.domain.data.FilterStateUseCase
 import me.ash.reader.domain.service.AccountService
@@ -152,7 +150,6 @@ class MainActivity : AppCompatActivity() {
         backStack: NavBackStack<NavKey>,
         subscribeViewModel: SubscribeViewModel,
     ) {
-        val scope = rememberCoroutineScope()
         DisposableEffect(backStack) {
             val listener =
                 Consumer<Intent> { intent ->
@@ -160,21 +157,19 @@ class MainActivity : AppCompatActivity() {
                         when (action) {
                             is LaunchAction.OpenArticle -> {
                                 val (articleId, feedId, groupId) = action
+                                val newReading = Reading(
+                                    articleId = articleId,
+                                    feedId = feedId,
+                                    groupId = groupId,
+                                )
                                 val readingIndex = backStack.indexOfFirst { it is Route.Reading }
                                 if (readingIndex != -1) {
-                                    repeat(backStack.size - readingIndex) {
+                                    while (backStack.size > readingIndex + 1) {
                                         backStack.removeLastOrNull()
                                     }
-                                }
-                                scope.launch {
-                                    delay(500L)
-                                    backStack.add(
-                                        Reading(
-                                            articleId = articleId,
-                                            feedId = feedId,
-                                            groupId = groupId,
-                                        )
-                                    )
+                                    backStack[readingIndex] = newReading
+                                } else {
+                                    backStack.add(newReading)
                                 }
                             }
 

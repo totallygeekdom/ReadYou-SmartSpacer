@@ -322,6 +322,9 @@
     <string name="export">Export</string>
     <string name="pull_to_switch_article">Pull to switch article</string>
     <string name="swipe_to_switch_article">Swipe to switch article</string>
+    <string name="swipe_to_navigate_article">Swipe to navigate articles</string>
+    <string name="horizontal">Horizontal</string>
+    <string name="vertical">Vertical</string>
     <string name="mark_above_as_read">Mark above as read</string>
     <string name="mark_below_as_read">Mark below as read</string>
     <string name="save">Save</string>
