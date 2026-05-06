@@ -6,7 +6,6 @@ import android.content.UriMatcher
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
-import android.util.Log
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
@@ -15,7 +14,6 @@ class ArticleWidgetContentProvider : ContentProvider() {
     companion object {
         const val AUTHORITY = "me.ash.reader.widget.articles"
         val COLUMNS = arrayOf("id", "feed_name", "title", "date", "feed_id", "filter_feed_id", "filter_group_id", "is_read")
-        private const val TAG = "ArticleWidgetProvider"
 
         private const val MATCH_ARTICLES = 1
         private val uriMatcher = UriMatcher(UriMatcher.NO_MATCH).apply {
@@ -42,12 +40,6 @@ class ArticleWidgetContentProvider : ContentProvider() {
         val filterFeedId = (config.dataSource as? DataSource.Feed)?.feedId
         val filterGroupId = (config.dataSource as? DataSource.Group)?.groupId
 
-        if (articles.isNotEmpty()) {
-            val first = articles.first()
-            Log.d(TAG, "widgetId=$widgetId first article: id=${first.id} title=\"${first.title}\" isRead=${first.isRead}")
-        } else {
-            Log.d(TAG, "widgetId=$widgetId article list is empty")
-        }
 
         val cursor = MatrixCursor(COLUMNS)
         articles.take(15).forEach { article ->
