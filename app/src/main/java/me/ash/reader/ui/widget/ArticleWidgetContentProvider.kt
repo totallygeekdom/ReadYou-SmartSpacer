@@ -6,6 +6,7 @@ import android.content.UriMatcher
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
+import android.util.Log
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
@@ -40,6 +41,9 @@ class ArticleWidgetContentProvider : ContentProvider() {
         val filterFeedId = (config.dataSource as? DataSource.Feed)?.feedId
         val filterGroupId = (config.dataSource as? DataSource.Group)?.groupId
 
+
+        val readCount = articles.count { it.isRead }
+        Log.d("WidgetSync", "query: widgetId=$widgetId total=${articles.size} readCount=$readCount")
 
         val cursor = MatrixCursor(COLUMNS)
         articles.take(15).forEach { article ->

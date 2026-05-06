@@ -142,6 +142,7 @@ abstract class AbstractRssRepository(
             ?.forEachIndexed { index, it ->
                 articleDao.markAsReadByIdSet(accountId, it.toSet(), isUnread)
             }
+        android.util.Log.d("WidgetSync", "batchMarkAsRead: ${articleIds.size} articles isUnread=$isUnread → notifyChange")
         context.contentResolver.notifyChange(widgetArticlesUri, null)
     }
 

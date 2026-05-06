@@ -102,6 +102,7 @@ class DiffMapHolder @Inject constructor(
         dbJob = applicationScope.launch(ioDispatcher) {
             diffMapSnapshotFlow.debounce(2_000).collect {
                 if (it.isNotEmpty()) {
+                    android.util.Log.d(TAG, "commitOnChange: diffMap has ${it.size} entries, committing to DB")
                     commitDiffsToDb()
                 }
             }
