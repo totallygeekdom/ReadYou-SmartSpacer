@@ -41,6 +41,7 @@ class ArticleWidgetContentProvider : ContentProvider() {
         val filterGroupId = (config.dataSource as? DataSource.Group)?.groupId
 
 
+        android.util.Log.d("WidgetSync", "query: widgetId=$widgetId total=${articles.size} readCount=${articles.count { it.isRead }}")
         val cursor = MatrixCursor(COLUMNS)
         articles.take(15).forEach { article ->
             cursor.addRow(arrayOf(article.id, article.feedName, article.title, article.date, article.feedId, filterFeedId, filterGroupId, if (article.isRead) 1 else 0))
