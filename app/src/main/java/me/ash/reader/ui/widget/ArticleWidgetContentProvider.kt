@@ -42,11 +42,9 @@ class ArticleWidgetContentProvider : ContentProvider() {
         val filterFeedId = (config.dataSource as? DataSource.Feed)?.feedId
         val filterGroupId = (config.dataSource as? DataSource.Group)?.groupId
 
-        if (articles.isNotEmpty()) {
-            val first = articles.first()
-            Log.d(TAG, "widgetId=$widgetId first article: id=${first.id} title=\"${first.title}\" isRead=${first.isRead}")
-        } else {
-            Log.d(TAG, "widgetId=$widgetId article list is empty")
+        Log.d(TAG, "widgetId=$widgetId articleCount=${articles.size} readCount=${articles.count { it.isRead }}")
+        articles.take(15).forEachIndexed { i, a ->
+            Log.d(TAG, "  [$i] isRead=${a.isRead} id=${a.id} title=\"${a.title}\"")
         }
 
         val cursor = MatrixCursor(COLUMNS)
