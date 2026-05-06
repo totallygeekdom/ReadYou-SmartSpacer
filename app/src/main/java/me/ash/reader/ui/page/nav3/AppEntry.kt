@@ -127,7 +127,9 @@ fun AppEntry(backStack: NavBackStack<NavKey>, filterUseCase: FilterStateUseCase)
                                 )
 
                             LaunchedEffect(key) {
-                                filterUseCase.init(key.feedId, key.groupId)
+                                if (key.feedId != null || key.groupId != null) {
+                                    filterUseCase.init(key.feedId, key.groupId)
+                                }
                                 if (key.articleId != null &&
                                     navigator.currentDestination?.contentKey?.articleId != key.articleId
                                 ) {
